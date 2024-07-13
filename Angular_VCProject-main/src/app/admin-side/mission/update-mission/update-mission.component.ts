@@ -62,7 +62,7 @@ export class UpdateMissionComponent implements OnInit {
 
   CountryList(){
     this.service.CountryList().subscribe((data:any)=>{
-      if(data.result == 1)
+      if(data.result != 1)
       {
           this.countryList = data.data;
       }
@@ -75,7 +75,7 @@ export class UpdateMissionComponent implements OnInit {
     CityList(countryId:any){
       countryId = countryId.target.value;
       this.service.CityList(countryId).subscribe((data:any)=>{
-      if(data.result == 1)
+      if(data.result != 1)
       {
           this.cityList = data.data;
       }
@@ -190,48 +190,50 @@ export class UpdateMissionComponent implements OnInit {
     }
   }
 
-async OnSubmit(){debugger;
-  this.formValid = true;
-  let value = this.editMissionForm.value;
-  let updateImageUrl = '';
-  var SkillLists = Array.isArray(value.missionSkillId) ? value.missionSkillId.join(",") : "";
-  value.missionSkillId = SkillLists;
-  console.log(this.editMissionForm)
+  async OnSubmit() {
+    this.formValid = true;
+    let value = this.editMissionForm.value;
+    let updateImageUrl = '';
+    var SkillLists = Array.isArray(value.missionSkillId) ? value.missionSkillId.join(",") : "";
+    value.missionSkillId = SkillLists;
 
-  if(this.editMissionForm.valid)
-  {
-    if(this.isFileUpload){
-      await this.service.UploadImage(this.formData).pipe().toPromise().then((res:any)=>{
-        if(res.success){
-          updateImageUrl = res.data;
+    // Format startDate and endDate to ISO string format
+    value.startDate = new Date(value.startDate).toISOString();
+    value.endDate = new Date(value.endDate).toISOString();
+
+    console.log("Form Values:", value);
+
+    if (this.editMissionForm.valid) {
+        if (this.isFileUpload) {
+            await this.service.UploadImage(this.formData).toPromise().then((res: any) => {
+                if (res.success) {
+                    updateImageUrl = res.data;
+                }
+            }, err => this.toast.error({ detail: "ERROR", summary: err.error.message }));
         }
-      },err=>this.toast.error({detail:"ERROR",summary:err.error.message}));
+
+        if (this.isFileUpload) {
+            value.missionImages = updateImageUrl;
+        } else {
+            value.missionImages = this.editData.missionImages;
+        }
+
+        this.service.UpdateMission(value).subscribe((data: any) => {
+            console.log("API Response:", data);
+            if (data.result == 1) {
+                this.toast.success({ detail: "SUCCESS", summary: data.data, duration: 3000 });
+                setTimeout(() => {
+                    this.router.navigate(['admin/mission']);
+                }, 1000);
+            } else {
+                this.toastr.error(data.message);
+            }
+        }, err => this.toast.error({ detail: "ERROR", summary: err.message, duration: 3000 }));
+    } else {
+        console.log("Form is invalid");
     }
-    if(this.isFileUpload)
-    {
-      value.missionImages = updateImageUrl;
-    }
-    else
-    {
-      value.missionImages = this.editData.missionImages;
-    }
-    this.service.UpdateMission(value).subscribe((data:any)=>{
-          if(data.result == 1)
-          {
-            //this.toastr.success(data.data);
-            this.toast.success({detail:"SUCCESS",summary:data.data,duration:3000});
-            setTimeout(() => {
-              this.router.navigate(['admin/mission']);
-            }, 1000);
-          }
-          else
-          {
-            this.toastr.error(data.message);
-           // this.toast.error({detail:"ERROR",summary:data.message,duration:3000});
-          }
-    },err=>this.toast.error({detail:"ERROR",summary:err.message,duration:3000}));
-  }
 }
+
   OnCancel()
   {
     this.router.navigateByUrl('admin/mission');

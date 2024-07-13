@@ -40,6 +40,25 @@
                       </span>
                     </div>
                     <div class="col-sm-6">
+                      <label class="col-form-label">Mission Description</label>
+                      <textarea class="form-control" row="3" placeholder="Enter your message" formControlName="missionDescription"></textarea>
+                      <span class="text-danger" *ngIf="missionDescription.invalid && (missionDescription.touched || formValid)">
+                        Please Enter Mission Description
+                      </span>
+                    </div>
+
+                  </div>
+                   <div class="row">
+                    <div class="col-sm-6">
+                      <label class="col-form-label">Mission Skills</label>
+                      <select class="form-select skills" formControlName="missionSkillId" multiple="multiple">
+                        <option *ngFor="let item of missionSkillList" value="{{item.value}}">{{item.text}}</option>
+                      </select>
+                      <span class="text-danger" *ngIf="missionSkillId.invalid && (missionSkillId.touched || formValid)">
+                        Please Select Mission SKill
+                      </span>
+                    </div>
+                    <div class="col-sm-6">
                       <label class="col-form-label">Mission Theme</label>
                       <select class="form-select" formControlName="missionThemeId">
                         <option *ngFor="let item of missionThemeList" value="{{item.value}}">{{item.text}}</option>
@@ -48,15 +67,6 @@
                         Please Select Mission Theme
                       </span>
                       </div>
-                  </div>
-                   <div class="row">
-                    <div class="col-sm-6">
-                      <label class="col-form-label">Mission Description</label>
-                      <textarea class="form-control" row="3" placeholder="Enter your message" formControlName="missionDescription"></textarea>
-                      <span class="text-danger" *ngIf="missionDescription.invalid && (missionDescription.touched || formValid)">
-                        Please Enter Mission Description
-                      </span>
-                    </div>
             
                    </div>
                    <div class="row">
@@ -90,20 +100,12 @@
                           Please Select Image
                         </span>
                       </div>
-                      <div class="col-sm-6">
-                        <label class="col-form-label">Mission Skills</label>
-                        <select class="form-select skills" formControlName="missionSkillId" multiple="multiple">
-                          <option *ngFor="let item of missionSkillList" value="{{item.value}}">{{item.text}}</option>
-                        </select>
-                        <span class="text-danger" *ngIf="missionSkillId.invalid && (missionSkillId.touched || formValid)">
-                          Please Select Mission SKill
-                        </span>
-                      </div>
+
                     </div>
                     <div class="row">
                       <div class="col-sm-1 pt-2" *ngFor="let items of imageListArray">
                         <img src="{{items}}" style="width:95px;max-width: 95px important;height:95px;max-height: 95px !important;" onerror="this.src='assets/NoImg.png'" alt="" class="img-thumbnail position-relative">
-                        <!-- <span style="position:relative;"><button class="btn btnremove btn-outline-secondary" (click)="OnRemoveImage(items)">x</button></span> -->
+                        <span style="position:relative;"><button class="btn btnremove btn-outline-secondary" (click)="OnRemoveImage(items)">x</button></span>
                       </div>
                     </div>
                 </div>

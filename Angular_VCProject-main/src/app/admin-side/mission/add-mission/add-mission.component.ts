@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AdminsideServiceService } from 'src/app/service/adminside-service.service';
 import { NgToastService } from 'ng-angular-popup';
+import { Mission } from 'src/app/model/cms.model';
 
 @Component({
   selector: 'app-add-mission',
@@ -15,7 +16,7 @@ export class AddMissionComponent implements OnInit {
   addMissionForm: FormGroup;
   endDateDisabled: boolean = true;
   regDeadlineDisabled: boolean = true;
-  formValid: boolean;
+  formValid: boolean = false;
   countryList: any[] = [];
   cityList: any[] = [];
   missionThemeList: any[] = [];
@@ -39,6 +40,7 @@ export class AddMissionComponent implements OnInit {
     this.GetMissionSkillList();
     this.GetMissionThemeList();
   }
+  
 
   addMissionFormValid() {
     this.addMissionForm = this.fb.group({
@@ -50,7 +52,8 @@ export class AddMissionComponent implements OnInit {
       endDate: [null, Validators.compose([Validators.required])],
       missionThemeId: [null, Validators.compose([Validators.required])],
       missionSkillId: [null, Validators.compose([Validators.required])],
-      missionImages: [null, Validators.compose([Validators.required])],
+      missionType: [null, Validators.compose([Validators.required])],
+      missionImages: [null],
       totalSheets: [null, Validators.compose([Validators.required])]
     });
   }
@@ -79,7 +82,7 @@ export class AddMissionComponent implements OnInit {
 
   CountryList() {
     this.service.CountryList().subscribe((data: any) => {
-      if (data.result == 1) {
+      if (data.result != 1) {
         this.countryList = data.data;
       } else {
         this.toast.error({ detail: "ERROR in country ", summary: data.message, duration: 3000 });
@@ -90,7 +93,7 @@ export class AddMissionComponent implements OnInit {
   CityList(countryId: any) {
     countryId = countryId.target.value;
     this.service.CityList(countryId).subscribe((data: any) => {
-      if (data.result == 1) {
+      if (data.result != 1) {
         this.cityList = data.data;
       } else {
         this.toast.error({ detail: "ERROR in city", summary: data.message, duration: 3000 });
@@ -145,30 +148,86 @@ export class AddMissionComponent implements OnInit {
     let imageUrl: any[] = [];
     let value = this.addMissionForm.value;
     value.missionSkillId = Array.isArray(value.missionSkillId) ? value.missionSkillId.join(',') : value.missionSkillId;
+    value.missionThemeId = Array.isArray(value.missionThemeId) ? value.missionThemeId.join(',') : value.missionThemeId;
+
+    // Format startDate and endDate to ISO string format
+    value.startDate = new Date(value.startDate).toISOString();
+    value.endDate = new Date(value.endDate).toISOString();
+
     if (this.addMissionForm.valid) {
       if (this.imageListArray.length > 0) {
         await this.service.UploadImage(this.formData).pipe().toPromise().then((res: any) => {
           if (res.success) {
             imageUrl = res.data;
           }
-        }, err => { this.toast.error({ detail: "ERROR", summary: err.message, duration: 3000 }) });
+        }, err => {
+          this.toast.error({ detail: "ERROR", summary: err.message, duration: 3000 });
+        });
       }
+
       let imgUrlList = imageUrl.map(e => e.replace(/\s/g, "")).join(",");
       value.missionImages = imgUrlList;
-      this.service.AddMission(value).subscribe((data: any) => {
-        if (data.result == 1) {
+
+      // Map the form values to the API payload structure
+      const missionPayload = {
+        createdDate: new Date().toISOString(),
+        modifiedDate: new Date().toISOString(),
+        isDeleted: false,
+        id: 0,  // Assuming id is 0 for new missions
+        missionTitle: value.missionTitle,
+        missionDescription: value.missionDescription,
+        missionOrganisationName: '', // Adjust as needed
+        missionOrganisationDetail: '', // Adjust as needed
+        countryId: value.countryId,
+        cityId: value.cityId,
+        startDate: value.startDate,
+        endDate: value.endDate,
+        missionType: value.missionType, // Include missionType from form value
+        totalSheets: value.totalSheets || null,
+        registrationDeadLine: value.endDate, // Adjust as needed
+        missionThemeId: value.missionThemeId,
+        missionSkillId: value.missionSkillId,
+        missionImages: value.missionImages,
+        missionDocuments: '', // Adjust as needed
+        missionAvilability: '', // Adjust as needed
+        missionVideoUrl: '', // Adjust as needed
+        countryName: '', // NotMapped
+        cityName: '', // NotMapped
+        missionThemeName: '', // NotMapped
+        missionSkillName: '', // NotMapped
+        missionStatus: '', // NotMapped
+        missionApplyStatus: '', // NotMapped
+        missionApproveStatus: '', // NotMapped
+        missionDateStatus: '', // NotMapped
+        missionDeadLineStatus: '', // NotMapped
+        missionFavouriteStatus: '', // NotMapped
+        rating: 0 // Adjust as needed
+      };
+      
+
+      // Log the payload for debugging
+      console.log("Mission Payload:", missionPayload);
+
+      this.service.AddMission(missionPayload).subscribe((data: any) => {
+        if (data.result === 1) {
           this.toast.success({ detail: "SUCCESS", summary: data.data, duration: 3000 });
           setTimeout(() => {
             this.router.navigate(['admin/mission']);
           }, 1000);
-        }
-        else {
+        } else {
           this.toast.error({ detail: "ERROR", summary: data.message, duration: 3000 });
         }
+      }, error => {
+        console.error("Error adding mission:", error);
+        this.toast.error({ detail: "ERROR", summary: "An error occurred", duration: 3000 });
       });
+
       this.formValid = false;
     }
   }
+
+
+
 
   OnCancel() {
     this.router.navigateByUrl('admin/mission');
